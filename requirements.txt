@@ -1,0 +1,3 @@
+tqdm>=4.64.0           # Progress bar during scans
+rich>=13.3.0           # Table output for findings
+autopep8>=2.0.0        # For optional formatting, especially in py2 conversion
