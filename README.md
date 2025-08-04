@@ -1,4 +1,4 @@
-# 🛡️ Pickle 🥒 Inspector 🔍
+# Pickle Inspector
 
 `pickle_inspector` is a static analysis tool to detect **insecure deserialization vulnerabilities** in Python projects — especially those involving `pickle.load()`, `yaml.load()`, and [other unsafe sinks](#insecure-deserialization-sinks-supported). It identifies flows from user-controlled inputs to deserialization sinks, including cases like:
 
@@ -11,24 +11,32 @@
 
 The tool statically detects usage of the following **deserialization functions**, which can lead to arbitrary code execution or data tampering when handling untrusted input:
 
-| Sink               | Description                                                                 |
-|--------------------|-----------------------------------------------------------------------------|
-| `pickle.load()`    | 💥 **Code execution** risk if attacker controls input                        |
-| `pickle.loads()`   | Same as `pickle.load` but for in-memory data                                |
-| `yaml.load()`      | 💥 Unsafe: can instantiate arbitrary objects when used with default loader   |
-| `marshal.load()`   | Can load arbitrary Python bytecode (rarely used outside core)               |
-| `marshal.loads()`  | Like `marshal.load`, but on byte strings                                    |
-| `shelve.open()`    | Implicitly uses `pickle` to load data from disk                             |
-| `joblib.load()`    | Common in ML pipelines, relies on `pickle` under the hood                   |
-| `torch.load()`     | Used in PyTorch — internally uses `pickle`, exploitable via model files     |
-| `tf.keras.models.load_model()` | TensorFlow — uses HDF5 files that may include `pickle` fallback   |
+| Sink                                  | Description |
+|---------------------------------------|-------------|
+| `pickle.load()`                       | Code execution risk if attacker controls input |
+| `pickle.loads()`                      | Same as `pickle.load` but for in-memory data |
+| `pickle.Unpickler.load()`            | Can be used in custom deserialization flows, still uses pickle internally |
+| `joblib.load()`                       | Common in ML pipelines, relies on pickle under the hood |
+| `sklearn.externals.joblib.load()`     | Legacy scikit-learn import path for joblib, also uses pickle |
+| `cloudpickle.load()`                  | Like pickle, used in distributed computing (e.g., Dask, Ray) |
+| `cloudpickle.loads()`                 | In-memory variant of `cloudpickle.load()` |
+| `dill.load()`                         | Extends pickle, supports serializing more object types |
+| `dill.loads()`                        | Like `dill.load`, but operates on in-memory byte strings |
+| `marshal.load()`                      | Can load arbitrary Python bytecode (rarely used outside stdlib) |
+| `marshal.loads()`                     | Same as above but from byte strings |
+| `shelve.open()`                       | Implicitly uses pickle to load persistent storage |
+| `yaml.load()`                         | Unsafe: can instantiate arbitrary objects when used with default loader |
+| `torch.load()`                        | Used in PyTorch — internally uses pickle, exploitable via model files |
+| `torch.jit.load()`                    | Loads TorchScript models, also uses pickle internally |
+| `numpy.load()`                        | Unsafe if `allow_pickle=True` (loads .npy/.npz files using pickle) |
+| `pandas.read_pickle()`               | Loads DataFrames using pickle under the hood |
+| `keras.models.load_model()`           | Can deserialize pickled objects inside HDF5 model files |
 
 > ⚠️ If these functions are used with attacker-controlled input — directly or indirectly — they are flagged with appropriate **risk levels** (HIGH, MEDIUM, LOW) based on flow analysis.
 
 Additional sinks can be added by editing `sources_and_sinks.py`.
 
-
-## ✅ Features
+## Features
 
 - Detects insecure usage of deserialization sinks (e.g., `pickle`, `marshal`, `yaml`, `shelve`, etc.)
 - Tracks both file-based and stream-based flows
@@ -40,8 +48,7 @@ Additional sinks can be added by editing `sources_and_sinks.py`.
 - Results are sorted by risk severity
 - Optional `--verbose` mode for full trace explanation
 
-
-## 🧠 Design Overview
+## Design Overview
 
 - **AST-based analysis** (no runtime execution)
 - All source code is parsed from temporary copies — your files are never modified
@@ -49,15 +56,7 @@ Additional sinks can be added by editing `sources_and_sinks.py`.
 - Reporting uses `rich` tables (if available), falls back to plain text
 - Taint tracking models common user-input flows, including Flask/Django
 
-
-## 🚫 Limitations
-
-- No inter-procedural taint tracking across files (yet)
-- Doesn't cover `json.load()` or `yaml.safe_load()` (by design)
-- No automatic fixing or patching — this is a detection tool
-
-
-## 📁 Directory Structure
+## Directory Structure
 
 ```
 pickle_inspector/
@@ -71,8 +70,7 @@ pickle_inspector/
 ├── sources_and_sinks.py  # Configurable list of dangerous functions
 ```
 
-
-## 📦 Setup (Recommended: Virtual Environment)
+## Setup (Recommended: Virtual Environment)
 
 ```bash
 git clone https://github.com/yourusername/pickle_inspector.git
@@ -82,7 +80,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 🛠 Requirements
+## Requirements
 
 ```
 tqdm>=4.64.0           # Progress bar during scans
@@ -95,7 +93,7 @@ autopep8>=2.0.0        # Optional formatting and linting (used internally for py
 - 2to3 (for --py2-support): install via your OS package manager # Standard tool for converting Python 2 code to Python 3
 
 
-## 📄 Usage
+## Usage
 
 ### Scan a directory:
 
@@ -121,8 +119,7 @@ python3 cli.py --py2-support ./legacy_project/
 python3 cli.py --verbose ./project/
 ```
 
-
-## ⚙️ Options
+## Options
 
 | Flag              | Description                                                                 |
 |-------------------|-----------------------------------------------------------------------------|
@@ -130,8 +127,7 @@ python3 cli.py --verbose ./project/
 | `--py2-support`   | Attempt to convert Python 2 files via `2to3` before analysis                |
 | `--verbose`       | Print detailed trace information per finding                                |
 
-
-## 🔍 Example Output
+## Example Output
 
 ```
 [!] Insecure deserialization detected
@@ -143,8 +139,7 @@ python3 cli.py --verbose ./project/
 [✓] Scan completed in 2.34 seconds.
 ```
 
-
-## 📋 Report Table (with `rich` installed)
+## Report Table (with `rich` installed)
 
 ```
 Insecure Deserialization Findings
@@ -154,9 +149,6 @@ Insecure Deserialization Findings
   /path/app.py                   14   pickle.load   file (direct stream from request...)   HIGH
 ```
 
-
-## ✅ License
+## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
-
-
