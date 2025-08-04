@@ -2,18 +2,24 @@
 
 # ⚠️ Dangerous functions that deserialize arbitrary objects (sinks)
 SINKS = {
-    "pickle.load",
-    "pickle.loads",
-    "pickle.Unpickler.load",
-    "joblib.load",
-    "cloudpickle.load",
-    "cloudpickle.loads",
-    "dill.load",
-    "dill.loads",
-    "marshal.load",
-    "marshal.loads",
-    "shelve.open",        # Indirect: opens pickle-backed object storage
-    "yaml.load",          # PyYAML (unsafe unless using safe_load)
+    "pickle.load",                       # Standard pickle deserialization (file-based)
+    "pickle.loads",                      # Standard pickle deserialization (in-memory)
+    "pickle.Unpickler.load",             # Custom unpickler-based deserialization
+    "joblib.load",                       # Joblib loader using pickle internally
+    "cloudpickle.load",                  # Cloudpickle supports extended objects, uses pickle
+    "cloudpickle.loads",                 # In-memory version of cloudpickle.load
+    "dill.load",                         # Dill extends pickle; supports more object types
+    "dill.loads",                        # In-memory version of dill.load
+    "marshal.load",                      # Deserializes Python bytecode (unsafe)
+    "marshal.loads",                     # In-memory version of marshal.load
+    "shelve.open",                       # Opens persistent dictionary backed by pickle
+    "yaml.load",                         # PyYAML unsafe load (use safe_load instead)
+    "torch.load",                        # PyTorch model loader — uses pickle internally
+    "torch.jit.load",                    # TorchScript model loader — also uses pickle
+    "numpy.load",                        # Loads .npy/.npz files — unsafe if allow_pickle=True
+    "pandas.read_pickle",                # Loads pandas DataFrames via pickle
+    "sklearn.externals.joblib.load",     # Legacy import path — same as joblib.load
+    "keras.models.load_model",           # Keras model loader — may fallback to pickle inside HDF5
 }
 
 # 🔺 Known taint sources (untrusted inputs)
