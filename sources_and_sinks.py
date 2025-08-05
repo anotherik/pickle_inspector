@@ -24,27 +24,64 @@ SINKS = {
 
 # 🔺 Known taint sources (untrusted inputs)
 SOURCES = {
+    # Generic input sources
     "input",
     "sys.argv",
     "os.environ.get",
     "os.getenv",
+    "argparse.Namespace",
+
+    # Flask / WSGI-style request input
+    "request.form",
     "request.form.get",
     "request.form.__getitem__",
+    "request.form['...']",
+
+    "request.args",
     "request.args.get",
     "request.args.__getitem__",
+    "request.args['...']",
+
+    "request.json",
     "request.json.get",
     "request.json.__getitem__",
+    "request.json['...']",
+
+    "request.values",
+    "request.values.get",
+
     "request.data",
-    "request.get_json",
-    "request.files.__getitem__",
-    "request.files.get",
-    "request.POST.get",         # Django
-    "request.GET.get",
     "request.body",
+
+    "request.files",
+    "request.files.get",
+    "request.files.__getitem__",
+    "request.files['...']",
+
+    "request.headers.get",
+    "request.cookies.get",
+
+    # Django-style request input
+    "request.POST.get",
+    "request.POST['...']",
+    "request.GET.get",
+    "request.GET['...']",
+
     "request.FILES.get",
-    "argparse.Namespace",
-    "urllib.request.urlopen",
+    "request.FILES['...']",
+
+    # FastAPI and aliasing
+    "fastapi.Request.json",
+    "flask.Request.get_json",
+
+    # Network and file inputs
     "requests.get",
+    "urllib.request.urlopen",
     "socket.recv",
+
+    # Deserialization wrappers (optional, depending on goal)
+    "base64.b64decode",
+    "json.loads",
+    "open",  # Requires tracking tainted file paths
 }
 
