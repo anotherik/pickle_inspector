@@ -190,6 +190,19 @@ class SinkVisitor(ast.NodeVisitor):
 
         elif isinstance(node, ast.Attribute):
             attr = self.get_attribute_path(node)
+        
+            # Check for known tainted sources like request.form, request.args, etc.
+            if attr in [
+                "request.form",
+                "request.args",
+                "request.values",
+                "request.json",
+                "request.data",
+                "request.POST",
+                "request.GET"
+            ]:
+                return (f"{attr} (attribute)", "HIGH")
+        
             return (f"{attr} (attribute)", "LOW")
 
         elif isinstance(node, ast.Subscript):
