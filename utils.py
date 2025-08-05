@@ -2,6 +2,22 @@
 
 import ast
 
+def match_source(call_name, sources):
+    """
+    Check if the given function name or attribute path matches any known source.
+    This helps catch patterns like request.files['file'], request.get_json, etc.
+    """
+    if call_name in sources:
+        return True
+
+    # Try fuzzy match for dotted attributes
+    parts = call_name.split(".")
+    for i in range(len(parts), 0, -1):
+        partial = ".".join(parts[:i])
+        if partial in sources:
+            return True
+    return False
+
 def extract_full_func_name(func_node, aliases):
     """
     Resolve the full function name from an AST Call node.
