@@ -8,6 +8,7 @@ from utils import extract_full_func_name
 from utils import match_source
 from report import print_console_report
 from tqdm import tqdm
+from collections import Counter
 
 class Finding:
     """
@@ -60,6 +61,15 @@ def analyze_index(project_index, verbose=False):
             print(str(finding))
 
     print_console_report(findings)
+    
+    print(f"\n[!] Total Findings: {len(findings)}")
+    risk_counts = Counter(f.risk for f in findings)
+    print("\n" + "-" * 60)
+    print("[!] Risk Summary:")
+    for level in ["HIGH", "MEDIUM", "LOW"]:
+        if level in risk_counts:
+            print(f"    {level}: {risk_counts[level]}")
+    print("-" * 60)
     elapsed = time.time() - start_time
     print(f"\n[✓] Scan completed in {format_elapsed(elapsed)}.")
 
