@@ -5,6 +5,7 @@ import time
 from sources_and_sinks import SINKS, SOURCES
 from resolver import resolve_function_call
 from utils import extract_full_func_name
+from utils import match_source
 from report import print_console_report
 from tqdm import tqdm
 
@@ -162,7 +163,7 @@ class SinkVisitor(ast.NodeVisitor):
         elif isinstance(node, ast.Call):
             func_name, func_info = resolve_function_call(node, self.file_index, self.project_index)
 
-            if func_name in SOURCES:
+            if match_source(func_name, SOURCES):
                 return (f"{func_name} (call)", "HIGH")
 
             if func_name == "open" and node.args:
