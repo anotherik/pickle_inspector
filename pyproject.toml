@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pickle_inspector"
+version = "0.1.0"
+description = "Static analysis tool to detect insecure deserialization in Python code"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "anotherik", email = "anotherik@hotmail.com"}
+]
+maintainers = [
+    {name = "anotherik", email = "anotherik@hotmail.com"}
+]
+keywords = ["security", "static-analysis", "pickle", "deserialization", "vulnerability"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Security Engineers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Testing",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "tqdm>=4.64.0",
+    "rich>=13.3.0",
+    "autopep8>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/anotherik/pickle_inspector"
+Repository = "https://github.com/anotherik/pickle_inspector"
+Issues = "https://github.com/anotherik/pickle_inspector/issues"
+
+[project.scripts]
+pickle-inspector = "cli:main"
+
+[tool.setuptools]
+packages = ["pickle_inspector"]
+
+[tool.setuptools.packages.find]
+include = ["pickle_inspector*"] 
