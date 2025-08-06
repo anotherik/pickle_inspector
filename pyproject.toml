@@ -47,7 +47,13 @@ Issues = "https://github.com/anotherik/pickle_inspector/issues"
 pickle-inspector = "cli:main"
 
 [tool.setuptools]
-packages = ["pickle_inspector"]
-
-[tool.setuptools.packages.find]
-include = ["pickle_inspector*"] 
+py-modules = [
+    "cli",
+    "analyzer", 
+    "ast_parser",
+    "indexer",
+    "resolver",
+    "utils",
+    "report",
+    "sources_and_sinks"
+] 
