@@ -70,10 +70,18 @@ pickle_inspector/
 ├── sources_and_sinks.py  # Configurable list of dangerous functions
 ```
 
-## Setup (Recommended: Virtual Environment)
+## Installation
+
+### Option 1: Install from GitHub (Recommended)
 
 ```bash
-git clone https://github.com/yourusername/pickle_inspector.git
+pip install git+https://github.com/anotherik/pickle_inspector.git
+```
+
+### Option 2: Manual Setup (Development)
+
+```bash
+git clone https://github.com/anotherik/pickle_inspector.git
 cd pickle_inspector
 python3 -m venv venv
 source venv/bin/activate
@@ -95,29 +103,38 @@ autopep8>=2.0.0        # Optional formatting and linting (used internally for py
 
 ## Usage
 
+After installation, you can use the `pickle-inspector` command directly:
+
 ### Scan a directory:
 
 ```bash
-python3 cli.py --skip-errors ./my_project/
+pickle-inspector --skip-errors ./my_project/
 ```
 
 ### Scan a single file:
 
 ```bash
-python3 cli.py ./vulnerable_app.py
+pickle-inspector ./vulnerable_app.py
 ```
 
 ### With Python 2 support:
 
 ```bash
-python3 cli.py --py2-support ./legacy_project/
+pickle-inspector --py2-support ./legacy_project/
 ```
 
 ### Verbose output (full trace detail):
 
 ```bash
-python3 cli.py --verbose ./project/
+pickle-inspector --verbose ./project/
 ```
+
+### Development usage (if not installed):
+
+```bash
+python3 cli.py --skip-errors ./my_project/
+```
+
 
 ## Options
 
