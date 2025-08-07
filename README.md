@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="pickle-inspector.png" alt="Pickle Inspector Logo" width="300"/>
+</p>
+
 # Pickle Inspector
 
 `pickle_inspector` is a static analysis tool to detect **insecure deserialization vulnerabilities** in Python projects — especially those involving `pickle.load()`, `yaml.load()`, and [other unsafe sinks](#insecure-deserialization-sinks-supported). It identifies flows from user-controlled inputs to deserialization sinks, including cases like:
