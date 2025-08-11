@@ -9,6 +9,20 @@ from ast_parser import parse_file_to_ast
 import os
 import sys
 
+try:
+    from rich.console import Console
+    RICH_AVAILABLE = True
+except ImportError:
+    RICH_AVAILABLE = False
+
+def print_colored(message, style="white"):
+    """Print a message with color if rich is available."""
+    if RICH_AVAILABLE:
+        console = Console()
+        console.print(message, style=style)
+    else:
+        print(message)
+
 @dataclass
 class FunctionInfo:
     name: str
@@ -49,7 +63,7 @@ def convert_py2_file(original_path, temp_dir):
         )
         return temp_path
     except subprocess.CalledProcessError:
-        print(f"[!] Failed to convert {original_path} with 2to3")
+        print_colored(f"[!] Failed to convert {original_path} with 2to3", "bold red")
         return None
 
 def normalize_indentation(filepath):
@@ -64,7 +78,7 @@ def normalize_indentation(filepath):
             check=True
         )
     except Exception:
-        print(f"[!] Warning: autopep8 failed to format {filepath}")
+        print_colored(f"[!] Warning: autopep8 failed to format {filepath}", "bold orange3")
 
 def detect_py2_print(source_code):
     """
@@ -97,7 +111,7 @@ def index_project(filepaths, py2_mode=False, skip_errors=False):
                 # Convert Python 2 to 3 if needed
                 if detect_py2_print(code):
                     if not py2_mode:
-                        print(f"[!] Python 2 syntax detected in {original_path}. Use --py2-support to scan it.")
+                        print_colored(f"[!] Python 2 syntax detected in {original_path}. Use --py2-support to scan it.", "bold yellow")
                         continue
                     subprocess.run(
                         [shutil.which("python3"), "-m", "lib2to3", "-w", "-n", temp_path],
@@ -109,11 +123,11 @@ def index_project(filepaths, py2_mode=False, skip_errors=False):
                 filename, tree, source = parse_file_to_ast(temp_path)
                 if not tree:
                     if skip_errors:
-                        print(f"[!] Skipped {original_path}: unable to parse.")
+                        print_colored(f"[!] Skipped {original_path}: unable to parse.", "bold orange3")
                         continue
                     else:
-                        print(f"[!] Error: Unable to parse {original_path}.")
-                        print("    Use --skip-errors to skip this file and continue.")
+                        print_colored(f"[!] Error: Unable to parse {original_path}.", "bold red")
+                        print_colored("    Use --skip-errors to skip this file and continue.", "bold red")
                         sys.exit(1)
 
                 # Index with the real path instead of temp
@@ -132,7 +146,7 @@ def index_project(filepaths, py2_mode=False, skip_errors=False):
 
             except Exception as e:
                 if skip_errors:
-                    print(f"[!] Skipped {original_path}: {e}")
+                    print_colored(f"[!] Skipped {original_path}: {e}", "bold orange3")
                     continue
                 else:
                     raise e
