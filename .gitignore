@@ -61,4 +61,20 @@ venv.bak/
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Pickle Inspector specific
+reports/
+# Generated reports (uncomment if you want to exclude all HTML/JSON reports)
+# *.html
+# *.json
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Test files (optional - uncomment if you want to exclude test files)
+# test_*.py
+# *_test.py 
