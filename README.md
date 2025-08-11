@@ -9,6 +9,8 @@
 - `pickle.load(open(...))` with user-influenced file paths
 - `pickle.load(request.files['file'])` directly from uploads
 - Dangerous patterns across multiple files and function calls
+- Web application contexts (Flask/Django routes)
+- File operation and task execution contexts
 
 
 ## Insecure Deserialization Sinks Supported
@@ -42,36 +44,37 @@ Additional sinks can be added by editing `sources_and_sinks.py`.
 
 ## Features
 
-- Detects insecure usage of deserialization sinks (e.g., `pickle`, `marshal`, `yaml`, `shelve`, etc.)
-- Tracks both file-based and stream-based flows
-- Identifies tainted sources like `request.files`, `input()`, `sys.argv`, etc.
-- Supports Python 2 syntax conversion (optional)
-- Handles individual files or entire directories
-- Progress bar and scan timing
-- Graceful handling of Ctrl+C
-- Results are sorted by risk severity
-- Optional `--verbose` mode for full trace explanation
+- **Detection**: Detects insecure usage of deserialization sinks (e.g., `pickle`, `marshal`, `yaml`, `shelve`, etc.)
+- **Flow Tracking**: Tracks both file-based and stream-based flows with full path visibility
+- **Context Awareness**: Identifies web application contexts (Flask/Django routes), file operations, and task execution
+- **Selective Scanning**: Exclude test files, virtual environments, and other patterns with `--exclude`
+- **Reports**: Generate HTML reports with `--html` flag
+- **Multiple Formats**: Console output, JSON export, and HTML reports
+- **Legacy Support**: Python 2 syntax conversion (optional)
 
 ## Design Overview
 
 - **AST-based analysis** (no runtime execution)
 - All source code is parsed from temporary copies — your files are never modified
 - Python 2 files are converted in-memory if `--py2-support` is enabled
-- Reporting uses `rich` tables (if available), falls back to plain text
+- **Smart context detection** for web applications, file operations, and background tasks
 - Taint tracking models common user-input flows, including Flask/Django
 
 ## Directory Structure
 
 ```
 pickle_inspector/
-├── analyzer.py           # Core sink detection & taint tracking
-├── ast_parser.py         # AST parsing
-├── cli.py                # CLI interface
+├── analyzer.py           # Core sink detection & taint tracking with context awareness
+├── ast_parser.py         # AST parsing with error handling
+├── cli.py                # CLI interface with exclude and HTML export
 ├── indexer.py            # Project indexing, function/import mapping
 ├── resolver.py           # Call resolution
 ├── utils.py              # AST utilities
-├── report.py             # Console & JSON reporting
+├── report.py             # Console, JSON & HTML reporting
 ├── sources_and_sinks.py  # Configurable list of dangerous functions
+├── reports/              # Generated HTML reports (created automatically)
+   ├── project1_20250811_134848.html
+   └── project2_20250811_135230.html
 ```
 
 ## Installation
@@ -96,7 +99,7 @@ pip install -r requirements.txt
 
 ```
 tqdm>=4.64.0           # Progress bar during scans
-rich>=13.3.0           # Table output for findings
+rich>=13.3.0           # Table output for findings and HTML generation
 autopep8>=2.0.0        # Optional formatting and linting (used internally for py2 cleanup)
 ```
 
@@ -104,71 +107,123 @@ autopep8>=2.0.0        # Optional formatting and linting (used internally for py
 - Python 3.7+
 - 2to3 (for --py2-support): install via your OS package manager # Standard tool for converting Python 2 code to Python 3
 
-
 ## Usage
 
 After installation, you can use the `pickle-inspector` command directly:
 
-### Scan a directory:
+### Basic Scanning
 
 ```bash
+# Scan a directory
+pickle-inspector ./my_project/
+
+# Scan a single file
+pickle-inspector ./vulnerable_app.py
+
+# Scan with error handling
 pickle-inspector --skip-errors ./my_project/
 ```
 
-### Scan a single file:
+### Advanced Features
 
 ```bash
-pickle-inspector ./vulnerable_app.py
-```
+# Exclude test files and virtual environments
+pickle-inspector --exclude test --exclude venv --exclude __pycache__ ./project/
 
-### With Python 2 support:
+# Generate HTML report
+pickle-inspector --html ./project/
 
-```bash
+# Combine multiple features
+pickle-inspector --exclude test --exclude venv --html --verbose ./project/
+
+# Python 2 support for legacy code
 pickle-inspector --py2-support ./legacy_project/
-```
 
-### Verbose output (full trace detail):
-
-```bash
+# Verbose output with full trace details
 pickle-inspector --verbose ./project/
 ```
 
-### Development usage (if not installed):
+### Development Usage
 
 ```bash
 python3 cli.py --skip-errors ./my_project/
+python3 cli.py --exclude test --html ./project/
 ```
 
-
-## Options
+## Command Line Options
 
 | Flag              | Description                                                                 |
 |-------------------|-----------------------------------------------------------------------------|
+| `--exclude`       | Pattern to exclude from scanning (can be used multiple times)              |
+| `--html`          | Generate professional HTML report in `reports/` folder                     |
 | `--skip-errors`   | Skip files with syntax/indentation issues                                   |
 | `--py2-support`   | Attempt to convert Python 2 files via `2to3` before analysis                |
 | `--verbose`       | Print detailed trace information per finding                                |
 
 ## Example Output
 
+### Console Output (Rich Tables)
+
+```
+                                            Insecure Deserialization Findings
+
+  Risk       File                  Line   Context                Source              Flow               Sink
+ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  HIGH       /home/user/project/        7   File Op: load_config   pickle file:        File Operation     pickle.load
+             app.py                                                 '/config/session.   (load_config) →   
+                                                                     pkl'                fd (assigned at   
+                                                                                         line 6) →         
+                                                                                         open('/config/s  
+                                                                                         ession.pkl' (pi  
+                                                                                         ckle file))      
+  MEDIUM     /home/user/project/       14   POST /upload           request.form        HTTP POST /uploa  yaml.load
+             app.py                                                 ['yaml_data']       d → request.form  
+                                                                     (HTTP POST form    ['yaml_data'] →   
+                                                                     data)              yaml.load(..., L  
+                                                                                         oader=yaml.Loa  
+                                                                                         der)             
+```
+
+### Verbose Output
+
 ```
 [!] Insecure deserialization detected
-  Sink    : pickle.load
-  Source  : f (assigned at line 12) → file (direct stream from request.files)
-  File    : /path/to/app.py:14
   Risk    : HIGH
-
-[✓] Scan completed in 2.34 seconds.
+  File    : /home/user/project/app.py:7
+  Context : File Operation (load_config)
+  Source  : pickle file: '/config/session.pkl'
+  Flow    : File Operation (load_config) → fd (assigned at line 6) → open('/config/session.pkl' (pickle file))
+  Sink    : pickle.load
 ```
 
-## Report Table (with `rich` installed)
+## Context Detection
 
-```
-Insecure Deserialization Findings
+The tool automatically detects and provides context for different types of applications:
 
-  File                          Line   Sink          Source                               Risk
- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  /path/app.py                   14   pickle.load   file (direct stream from request...)   HIGH
-```
+### Web Applications
+- **Flask/Django Routes**: Detects `@app.route()` decorators and HTTP methods
+- **Form Data**: Identifies `request.form['field']` and `request.files['file']` patterns
+- **API Endpoints**: Shows HTTP method and endpoint path
+
+### File Operations
+- **File Functions**: Detects functions with names like `load`, `save`, `read`, `write`
+- **Documentation**: Analyzes docstrings for file-related keywords
+- **Operations**: Shows "File Operation: function_name" context
+
+### Background Tasks
+- **Task Functions**: Identifies functions with names like `task`, `job`, `worker`, `execute`
+- **Job Systems**: Common in Luigi, Celery, and other task frameworks
+- **Context**: Shows "Task Execution: function_name" context
+
+## Risk Assessment
+
+Findings are categorized by risk level based on flow analysis:
+
+| Risk Level | Description | Example |
+|------------|-------------|---------|
+| **HIGH**   | Direct user input to sink | `pickle.load(request.files['file'])` |
+| **MEDIUM** | Indirect user influence | `pickle.load(open(user_provided_path))` |
+| **LOW**    | Limited or no user control | `pickle.load(open('/etc/config.pkl'))` |
 
 ## License
 
