@@ -1,6 +1,36 @@
 # pickle_inspector/utils.py
 
 import ast
+import re
+import os
+from pathlib import Path
+
+def sanitize_filename(filename):
+    """
+    Safely sanitize a filename to prevent path traversal attacks.
+    Uses Python's pathlib for safe path handling.
+    """
+    if not filename:
+        return "unnamed"
+    
+    try:
+        # Use pathlib to safely handle the path - this prevents path traversal
+        path = Path(filename)
+        safe_name = path.name
+        
+        # Limit length
+        if len(safe_name) > 100:
+            safe_name = safe_name[:100]
+        
+        # Ensure it's not empty
+        if not safe_name:
+            safe_name = "unnamed"
+        
+        return safe_name
+        
+    except Exception:
+        # Fallback to safe default if anything goes wrong
+        return "unnamed"
 
 def match_source(call_name, sources):
     """
@@ -43,3 +73,15 @@ def extract_full_func_name(func_node, aliases):
         return aliases.get(func_node.id, func_node.id)
 
     return ""
+
+def get_attribute_path(node):
+    """
+    Gets the full attribute path from an AST node.
+    """
+    if isinstance(node, ast.Name):
+        return node.id
+    elif isinstance(node, ast.Attribute):
+        base = get_attribute_path(node.value)
+        return f"{base}.{node.attr}"
+    else:
+        return "unknown"
