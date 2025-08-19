@@ -17,11 +17,28 @@ def print_colored(message, style="white"):
     else:
         print(message)
 
-def parse_file_to_ast(filepath, verbosity="normal"):
+import os
+
+def _is_path_within_root(filepath, root):
+    """Check if the given filepath is within the root directory."""
+    abs_root = os.path.abspath(root)
+    abs_path = os.path.abspath(filepath)
+    try:
+        common = os.path.commonpath([abs_root, abs_path])
+    except ValueError:
+        # On Windows, if drives differ, commonpath raises ValueError
+        return False
+    return common == abs_root
+
+def parse_file_to_ast(filepath, verbosity="normal", safe_root=None):
     """
     Parse the file at `filepath` into an AST.
     Returns a tuple: (filename, AST node, source code string)
     """
+    if safe_root is None:
+        safe_root = os.getcwd()
+    if not _is_path_within_root(filepath, safe_root):
+        raise Exception(f"Access to file '{filepath}' is not allowed (outside of root directory '{safe_root}').")
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             source_code = f.read()
