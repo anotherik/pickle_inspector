@@ -52,7 +52,7 @@ def format_elapsed(seconds):
     remaining = seconds % 60
     return f"{minutes} minute{'s' if minutes > 1 else ''}, {remaining:.2f} seconds"
 
-def analyze_index(project_index, verbose=False):
+def analyze_index(project_index, verbose=False, verbosity="normal"):
     findings = []
     start_time = time.time()
 
@@ -65,7 +65,8 @@ def analyze_index(project_index, verbose=False):
             visitor.visit(file_index.tree)
             findings.extend(visitor.findings)
         except Exception as e:
-            print_colored(f"[!] Error analyzing {filename}: {e}", "bold red")
+            if verbosity != "quiet":
+                print_colored(f"[!] Error analyzing {filename}: {e}", "bold red")
             # Continue with other files
         progress.update(1)
 
@@ -83,7 +84,7 @@ def analyze_index(project_index, verbose=False):
     risk_counts = Counter(f.risk for f in findings)
     print_summary_with_colors(len(findings), risk_counts)
     elapsed = time.time() - start_time
-    print(f"\n[✓] Scan completed in {format_elapsed(elapsed)}.")
+    print(f"\n[+] Scan completed in {format_elapsed(elapsed)}.")
     
     return findings
 
