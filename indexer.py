@@ -89,7 +89,7 @@ def detect_py2_print(source_code):
         for line in source_code.splitlines()
     )
 
-def index_project(filepaths, py2_mode=False, skip_errors=False):
+def index_project(filepaths, py2_mode=False, skip_errors=False, verbosity="normal"):
     """
     Build a global project index by parsing and analyzing each file.
     Supports optional py2 compatibility and error skipping.
@@ -111,7 +111,8 @@ def index_project(filepaths, py2_mode=False, skip_errors=False):
                 # Convert Python 2 to 3 if needed
                 if detect_py2_print(code):
                     if not py2_mode:
-                        print_colored(f"[!] Python 2 syntax detected in {original_path}. Use --py2-support to scan it.", "bold yellow")
+                        if verbosity != "quiet":
+                            print_colored(f"[!] Python 2 syntax detected in {original_path}. Use --py2-support to scan it.", "bold yellow")
                         continue
                     subprocess.run(
                         [shutil.which("python3"), "-m", "lib2to3", "-w", "-n", temp_path],
@@ -120,10 +121,11 @@ def index_project(filepaths, py2_mode=False, skip_errors=False):
                     )
 
                 # Parse AST from the temp file
-                filename, tree, source = parse_file_to_ast(temp_path)
+                filename, tree, source = parse_file_to_ast(temp_path, verbosity)
                 if not tree:
                     if skip_errors:
-                        print_colored(f"[!] Skipped {original_path}: unable to parse.", "bold orange3")
+                        if verbosity != "quiet":
+                            print_colored(f"[!] Skipped {original_path}: unable to parse.", "bold orange3")
                         continue
                     else:
                         print_colored(f"[!] Error: Unable to parse {original_path}.", "bold red")
@@ -146,7 +148,8 @@ def index_project(filepaths, py2_mode=False, skip_errors=False):
 
             except Exception as e:
                 if skip_errors:
-                    print_colored(f"[!] Skipped {original_path}: {e}", "bold orange3")
+                    if verbosity != "quiet":
+                        print_colored(f"[!] Skipped {original_path}: {e}", "bold orange3")
                     continue
                 else:
                     raise e
