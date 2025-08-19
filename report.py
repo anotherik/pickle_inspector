@@ -39,7 +39,7 @@ def print_console_report(findings):
     Pretty-prints findings to the terminal using rich if available.
     """
     if not findings:
-        print("[✓] No insecure deserialization flows detected.")
+        print("[+] No insecure deserialization flows detected.")
         return
 
     if RICH_AVAILABLE:
@@ -175,17 +175,47 @@ def export_json_report(findings, output_file):
     """
     Write the findings to a JSON file.
     """
-    json_data = [
-        {
+    json_data = {
+        "scan_info": {
+            "total_findings": len(findings),
+            "risk_summary": {},
+            "generated_at": datetime.datetime.now().isoformat()
+        },
+        "findings": []
+    }
+    
+    # Count findings by risk level
+    risk_counts = {}
+    for finding in findings:
+        risk_counts[finding.risk] = risk_counts.get(finding.risk, 0) + 1
+    
+    json_data["scan_info"]["risk_summary"] = risk_counts
+    
+    # Add detailed findings
+    for f in findings:
+        # Format context information
+        context_info = {}
+        if f.context.get('http_endpoint'):
+            context_info["type"] = "http"
+            context_info["endpoint"] = f.context['http_endpoint']
+            context_info["method"] = f.context.get('http_method', 'GET')
+        elif f.context.get('operation_type') == 'file_operation':
+            context_info["type"] = "file_operation"
+            context_info["function_name"] = f.context.get('function_name', 'unknown')
+        elif f.context.get('operation_type') == 'task_execution':
+            context_info["type"] = "task_execution"
+            context_info["function_name"] = f.context.get('function_name', 'unknown')
+        
+        finding_data = {
             "file": f.filename,
             "line": f.lineno,
             "sink": f.sink,
             "initial_source": f.initial_source,
             "flow": f.flow,
             "risk": f.risk,
+            "context": context_info
         }
-        for f in findings
-    ]
+        json_data["findings"].append(finding_data)
 
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f, indent=2)
@@ -195,6 +225,11 @@ def export_html_report(findings, project_name="pickle_inspector_scan"):
     """
     Write the findings to an HTML file in the reports folder.
     """
+    from utils import sanitize_filename
+    
+    # Sanitize the project name to prevent path traversal
+    project_name = sanitize_filename(project_name)
+    
     # Create reports directory if it doesn't exist
     reports_dir = "reports"
     if not os.path.exists(reports_dir):
