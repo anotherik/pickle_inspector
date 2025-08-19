@@ -72,8 +72,9 @@ pickle_inspector/
 ├── utils.py              # AST utilities
 ├── report.py             # Console, JSON & HTML reporting
 ├── sources_and_sinks.py  # Configurable list of dangerous functions
-├── reports/              # Generated HTML reports (created automatically)
+├── reports/              # Generated HTML and JSON reports (created automatically)
    ├── project1_20250811_134848.html
+   ├── project1_20250811_134848.json
    └── project2_20250811_135230.html
 ```
 
@@ -120,7 +121,7 @@ pickle-inspector ./my_project/
 # Scan a single file
 pickle-inspector ./vulnerable_app.py
 
-# Scan with error handling
+# Continue scanning even when encountering parsing errors
 pickle-inspector --skip-errors ./my_project/
 ```
 
@@ -133,21 +134,31 @@ pickle-inspector --exclude test --exclude venv --exclude __pycache__ ./project/
 # Generate HTML report
 pickle-inspector --html ./project/
 
+# Generate JSON report
+pickle-inspector --json ./project/
+
+# Generate both HTML and JSON reports
+pickle-inspector --html --json ./project/
+
 # Combine multiple features
-pickle-inspector --exclude test --exclude venv --html --verbose ./project/
+pickle-inspector --exclude test --exclude venv --html --json --verbose --skip-errors ./project/
 
 # Python 2 support for legacy code
 pickle-inspector --py2-support ./legacy_project/
 
 # Verbose output with full trace details
 pickle-inspector --verbose ./project/
+
+# Control warning and error output (suppress SyntaxWarnings and parsing errors)
+pickle-inspector --scan-verbosity quiet ./project/
+
 ```
 
 ### Development Usage
 
 ```bash
 python3 cli.py --skip-errors ./my_project/
-python3 cli.py --exclude test --html ./project/
+python3 cli.py --exclude test --html --skip-errors ./project/
 ```
 
 ## Command Line Options
@@ -156,9 +167,11 @@ python3 cli.py --exclude test --html ./project/
 |-------------------|-----------------------------------------------------------------------------|
 | `--exclude`       | Pattern to exclude from scanning (can be used multiple times)              |
 | `--html`          | Generate professional HTML report in `reports/` folder                     |
-| `--skip-errors`   | Skip files with syntax/indentation issues                                   |
+| `--json`          | Generate structured JSON report in `reports/` folder                       |
+| `--skip-errors`   | Continue scanning when encountering syntax/indentation errors (default: stop on first error) |
 | `--py2-support`   | Attempt to convert Python 2 files via `2to3` before analysis                |
 | `--verbose`       | Print detailed trace information per finding                                |
+| `--scan-verbosity`| Control warning and error output: `quiet` (suppress all), `normal` (default), `verbose` (show all) |
 
 ## Example Output
 
@@ -194,6 +207,38 @@ python3 cli.py --exclude test --html ./project/
   Source  : pickle file: '/config/session.pkl'
   Flow    : File Operation (load_config) → fd (assigned at line 6) → open('/config/session.pkl' (pickle file))
   Sink    : pickle.load
+```
+
+### JSON Report
+
+The `--json` flag generates structured JSON reports in the `reports/` folder with the following structure:
+
+**JSON Structure Example**:
+```json
+{
+  "scan_info": {
+    "total_findings": 2,
+    "risk_summary": {
+      "HIGH": 1,
+      "MEDIUM": 1
+    },
+    "generated_at": "2025-08-11T16:15:17.055411"
+  },
+  "findings": [
+    {
+      "file": "/path/to/app.py",
+      "line": 7,
+      "sink": "pickle.load",
+      "initial_source": "pickle file: '/config/session.pkl'",
+      "flow": "File Operation (load_config) → fd → open('/config/session.pkl')",
+      "risk": "HIGH",
+      "context": {
+        "type": "file_operation",
+        "function_name": "load_config"
+      }
+    }
+  ]
+}
 ```
 
 ## Context Detection
