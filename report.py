@@ -217,12 +217,6 @@ def export_json_report(findings, output_file):
         }
         json_data["findings"].append(finding_data)
 
-    # Ensure output_file is within the reports directory
-    reports_dir_abs = os.path.abspath("reports")
-    output_file_abs = os.path.abspath(output_file)
-    if not output_file_abs.startswith(reports_dir_abs + os.sep):
-        raise Exception(f"Refusing to write outside reports directory: {output_file_abs}")
-
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f, indent=2)
     print(f"[+] JSON report written to {output_file}")
