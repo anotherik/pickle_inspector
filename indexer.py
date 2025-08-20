@@ -121,9 +121,7 @@ def index_project(filepaths, py2_mode=False, skip_errors=False, verbosity="norma
                     )
 
                 # Parse AST from the temp file
-                # Pass the original root directory as safe_root for validation
-                safe_root = os.getcwd()
-                filename, tree, source = parse_file_to_ast(temp_path, verbosity, safe_root=safe_root)
+                filename, tree, source = parse_file_to_ast(temp_path, verbosity)
                 if not tree:
                     if skip_errors:
                         if verbosity != "quiet":
