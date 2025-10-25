@@ -270,6 +270,13 @@ Findings are categorized by risk level based on flow analysis:
 | **MEDIUM** | Indirect user influence | `pickle.load(open(user_provided_path))` |
 | **LOW**    | Limited or no user control | `pickle.load(open('/etc/config.pkl'))` |
 
+## 🏆 Vulnerabilities Found with Pickle Inspector
+
+The following security issues were discovered with the help of **pickle_inspector**
+| Date | Repository / Project | Description | CVE / Reference |
+|------|-----------------------|--------------|-----------------|
+| 22-10-2025 | [secdev/scapy](https://github.com/secdev/scapy) | Scapy Session Loading Vulnerable to Arbitrary Code Execution via Untrusted Pickle Deserialization | [GHSA-cq46-m9x9-j8w2](https://github.com/secdev/scapy/security/advisories/GHSA-cq46-m9x9-j8w2) |
+
 ## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for details.
